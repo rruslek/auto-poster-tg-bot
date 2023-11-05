@@ -12,11 +12,14 @@ from aiogram import Bot
 import config
 from aiogram.enums.parse_mode import ParseMode
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime
+
 import kb
 import text
 
 router = Router()
-
+scheduler = AsyncIOScheduler()
 
 @router.message(Command("start"))
 async def start_handler(msg: Message):

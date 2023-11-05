@@ -7,7 +7,9 @@ def bd():
 	cur.execute('CREATE TABLE IF NOT EXISTS Users(user_id INTEGER NOT NULL PRIMARY KEY,'
 				'status INTEGER DEFAULT 0 NOT NULL)')
 	cur.execute('CREATE TABLE IF NOT EXISTS Channels(channel_id INTEGER PRIMARY KEY NOT NULL,'
-				'user_id INTEGER REFERENCES Users (user_id) NOT NULL)')
+				'user_id INTEGER REFERENCES Users (user_id) NOT NULL,'
+				'channel_name TEXT NOT NULL,'
+				'channel_link TEXT)')
 
 
 async def key_writer(link):
@@ -44,13 +46,24 @@ async def add_user(id):
 	con.commit()
 	cur.close()
 
-async def add_channel(channel_id, user_id):
+async def add_channel(user_id, channel_id, channel_name, channel_link):
 	con = sqlite3.connect("AutoPosterTG.db")
 	cur = con.cursor()
-	cur.execute('INSERT OR IGNORE INTO CHANNELS(channel_id, user_id) VALUES('+channel_id+','+user_id+')')
+	cur.execute('INSERT OR IGNORE INTO CHANNELS(user_id, channel_id, channel_name, channel_link) '
+				'VALUES(?,?,?,?)',
+				(user_id, channel_id, channel_name, channel_link))
 	con.commit()
 	cur.close()
 
+
+async def user_get_channels(id):
+	con = sqlite3.connect("AutoPosterTG.db")
+	cur = con.cursor()
+	cur.execute(f'SELECT * FROM Channels WHERE user_id = {id}')
+	data = cur.fetchall()
+	#status = re.sub('|\(|\'|\,|\)', '', str(data[0]))
+	cur.close()
+	return data
 
 async def user_get_status(id):
 	con = sqlite3.connect("AutoPosterTG.db")

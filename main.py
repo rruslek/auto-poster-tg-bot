@@ -7,7 +7,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 import config
 import db
-from handlers import router
+from handlers import router, scheduler
+
+
 
 
 async def main():
@@ -15,6 +17,7 @@ async def main():
     bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
+    scheduler.start()
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

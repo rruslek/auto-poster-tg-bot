@@ -5,7 +5,19 @@ menu = [
     [KeyboardButton(text="Шаблон", callback_data="sample"), KeyboardButton(text="Каталог эмодзи", callback_data="emoji_list")],
 ]
 
+post_media_text = [
+    [InlineKeyboardButton(text="Изменить текст", callback_data="edit_text")],
+    [InlineKeyboardButton(text="Добавить медиа", callback_data="add_media")],
+    [InlineKeyboardButton(text="Со звуком", callback_data="sound_on"), InlineKeyboardButton(text="URL-кнопки", callback_data="url_buttons")],
+    [InlineKeyboardButton(text="Комментарии", callback_data="comments"), InlineKeyboardButton(text="Закрепить", callback_data="pin")],
+    [InlineKeyboardButton(text="Ответный пост: не задан", callback_data="reply_post")],
+    [InlineKeyboardButton(text="<- Отменить", callback_data="cancel"), InlineKeyboardButton(text="Далее ->", callback_data="next")],
+]
+
 menu = ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True)
+edit_post = InlineKeyboardMarkup(inline_keyboard=post_media_text, resize_keyboard=True)
+
+add_channel = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="+ Добавить новый канал", callback_data="add_channel")]])
 
 check_sub = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Проверить подписку", callback_data="check_sub")]])
 buy_sub = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Купить подписку", callback_data="buy_sub")], [InlineKeyboardButton(text="◀️ Выйти в меню", callback_data="menu")]])

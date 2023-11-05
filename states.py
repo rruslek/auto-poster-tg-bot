@@ -1,4 +1,7 @@
 from aiogram.fsm.state import StatesGroup, State
 
 class Gen(StatesGroup):
-    get_channel = State()
+    add_channel = State()
+    new_post = State()
+    edit_post = State()
+    channel_id = State()
