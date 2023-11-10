@@ -20,6 +20,7 @@ import text
 
 router = Router()
 scheduler = AsyncIOScheduler()
+bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 @router.message(Command("start"))
 async def start_handler(msg: Message):
     await db.add_user(msg.from_user.id)
@@ -85,39 +86,41 @@ async def post_settings(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.answer(text.post_settings_text, reply_markup=kb.post_setting)
 @router.callback_query(F.data == "schedule_post")
 async def schedule_post(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.delete()
+    await clbck.message.answer(text.post_confirmation_text, reply_markup=kb.post_confirmation)
     scheduler.add_job(send_message, "date", run_date=datetime(2023, 11, 8, 21, 8), args=(await state.get_data()))
 @router.message(Gen.edit_post)
 async def edit_post(msg: Message, state: FSMContext):
     scheduler.add_job(send_message, "date", run_date=datetime(2023, 11, 8, 21, 8), args=(await state.get_data()))
 
-
+@router.callback_query(F.data == "post_confirm")
+async def post_settings(clbck: CallbackQuery):
+    await clbck.message.delete()
+    await clbck.message.answer(text.post_confirmation_text, reply_markup=kb.post_confirmation)
 @router.callback_query(F.data == "send_post")
 async def send_message(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.delete()
+    await clbck.message.answer("Пост был опубликован в канале [tester](https://t.me/testestsetse)", parse_mode=ParseMode.MARKDOWN)
     data = await state.get_data()
-    if data['photo']:
+    if 'photo' in data.keys():
         await send_photo(data)
-    elif data['video']:
+    elif 'video' in data.keys():
         await send_photo(data)
     else:
         await send_text(data)
 
 async def send_text(data):
-    bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
     await bot.send_message(data['channel'], data['text'])
 
 async def send_photo(data):
-    bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
-
     await bot.send_photo(data['channel'], photo=data['photo'], caption=data['text'])
 
 async def send_video(data):
-    bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
     await bot.send_video(data['channel'], video=data['video'], caption=data['text'])
 
 @router.message(Gen.add_channel)
 @router.callback_query(F.data == "add_channel")
 async def add_channel(msg: Message, state: FSMContext):
-    bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
     channel = msg.text
     if 'http' in channel or '@' in channel:
         if 'http' in channel:

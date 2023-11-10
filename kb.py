@@ -18,13 +18,20 @@ post_setting_ready = [
     [InlineKeyboardButton(text="Таймер автоудаления: нет", callback_data="auto_delete")],
     [InlineKeyboardButton(text="Автоповтор: нет", callback_data="auto_repeat")],
     [InlineKeyboardButton(text="Копировать", callback_data="copy_post"), InlineKeyboardButton(text="Переслать", callback_data="forward_post")],
-    [InlineKeyboardButton(text="Отложить", callback_data="schedule_post"), InlineKeyboardButton(text="Опубликовать", callback_data="send_post")],
+    [InlineKeyboardButton(text="Отложить", callback_data="schedule_post"), InlineKeyboardButton(text="Опубликовать", callback_data="post_confirm")],
+    [InlineKeyboardButton(text="<- Назад", callback_data="cancel")],
+]
+
+post_publication_confirm = [
+    [InlineKeyboardButton(text="Да, опубликовать", callback_data="send_post")],
     [InlineKeyboardButton(text="<- Назад", callback_data="cancel")],
 ]
 
 menu = ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True)
 edit_post = InlineKeyboardMarkup(inline_keyboard=post_media_text, resize_keyboard=True)
 post_setting = InlineKeyboardMarkup(inline_keyboard=post_setting_ready, resize_keyboard=True)
+post_confirmation = InlineKeyboardMarkup(inline_keyboard=post_publication_confirm, resize_keyboard=True)
+
 
 add_channel = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="+ Добавить новый канал", callback_data="add_channel")]])
 
