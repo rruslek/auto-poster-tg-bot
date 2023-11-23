@@ -5,3 +5,4 @@ class Gen(StatesGroup):
     new_post = State()
     edit_post = State()
     channel_id = State()
+    set_date = State()
