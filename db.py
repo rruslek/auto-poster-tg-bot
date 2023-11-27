@@ -10,6 +10,11 @@ def bd():
 				'user_id INTEGER REFERENCES Users (user_id) NOT NULL,'
 				'channel_name TEXT NOT NULL,'
 				'channel_link TEXT)')
+	cur.execute('CREATE TABLE IF NOT EXISTS Posts(post_id INTEGER PRIMARY KEY NOT NULL,'
+				'channel_id INTEGER REFERENCES Channels (channel_id) NOT NULL,'
+				'post_caption TEXT NOT NULL,'
+				'post_media TEXT,'
+				'post_date DATETIME NOT NULL)')
 
 
 async def key_writer(link):
@@ -55,6 +60,23 @@ async def add_channel(user_id, channel_id, channel_name, channel_link):
 	con.commit()
 	cur.close()
 
+async def add_post(channel_id, post_caption, post_media, post_date):
+	con = sqlite3.connect("AutoPosterTG.db")
+	cur = con.cursor()
+	cur.execute('INSERT OR IGNORE INTO POSTS(post_id, channel_id, post_caption, post_media, post_date) '
+				'VALUES(NULL,?,?,?,?)',
+				(channel_id, post_caption, post_media, post_date))
+	con.commit()
+	cur.close()
+
+async def get_posts(id):
+	con = sqlite3.connect("AutoPosterTG.db")
+	cur = con.cursor()
+	cur.execute(f'SELECT * FROM Posts WHERE channel_id = {id}')
+	data = cur.fetchall()
+	#status = re.sub('|\(|\'|\,|\)', '', str(data[0]))
+	cur.close()
+	return data
 
 async def user_get_channels(id):
 	con = sqlite3.connect("AutoPosterTG.db")

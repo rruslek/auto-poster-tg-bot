@@ -27,10 +27,25 @@ post_publication_confirm = [
     [InlineKeyboardButton(text="<- Назад", callback_data="cancel")],
 ]
 
+post_dates_btn = [
+    [InlineKeyboardButton(text="<- Вс, 26 ноября", callback_data="data1"),
+     InlineKeyboardButton(text="Пн, 27 ноября", callback_data="data1"),
+     InlineKeyboardButton(text="Вт, 28 ноября ->", callback_data="data2")]
+]
+
+post_dates_post = [
+    [InlineKeyboardButton(text="<- Вс, 26 ноября", callback_data="data1"),
+     InlineKeyboardButton(text="Пн, 27 ноября", callback_data="data1"),
+     InlineKeyboardButton(text="Вт, 28 ноября ->", callback_data="data2")],
+    [InlineKeyboardButton(text="", callback_data="post")],
+]
+
 menu = ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True)
 edit_post = InlineKeyboardMarkup(inline_keyboard=post_media_text, resize_keyboard=True)
 post_setting = InlineKeyboardMarkup(inline_keyboard=post_setting_ready, resize_keyboard=True)
 post_confirmation = InlineKeyboardMarkup(inline_keyboard=post_publication_confirm, resize_keyboard=True)
+
+post_dates = InlineKeyboardMarkup(inline_keyboard=post_dates_btn, resize_keyboard=True)
 
 
 add_channel = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="+ Добавить новый канал", callback_data="add_channel")]])
