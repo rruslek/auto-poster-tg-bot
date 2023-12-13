@@ -23,6 +23,8 @@ import text
 router = Router()
 scheduler = AsyncIOScheduler()
 bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
+
+
 @router.message(Command("start"))
 async def start_handler(msg: Message):
     await db.add_user(msg.from_user.id)
@@ -40,6 +42,7 @@ async def menu(msg: Message):
 async def menu(clbck: CallbackQuery):
     await clbck.message.edit_text(text.menu, reply_markup=kb.menu)
 
+
 @router.message(F.text == "Создать пост")
 async def post_creation(msg: Message, state: FSMContext):
     data = await db.user_get_channels(msg.chat.id)
@@ -48,10 +51,12 @@ async def post_creation(msg: Message, state: FSMContext):
         await msg.answer(text.no_channels, reply_markup=kb.menu)
     if len(data) == 1:
         data = data[0]
+        print(data)
         print(data[0])
         await state.set_state(Gen.new_post)
         await state.update_data(channel=data[0])
         await msg.answer(text.new_post_onech + f'[{data[2]}](https://t.me/{data[3]})', reply_markup=kb.add_channel, parse_mode=ParseMode.MARKDOWN)
+
 
 @router.message(F.text == "Контент-план")
 async def content_plan(msg: Message, state: FSMContext):
@@ -62,14 +67,50 @@ async def content_plan(msg: Message, state: FSMContext):
     if len(data) == 1:
         data = data[0]
         print(data[0])
-        posts = await db.get_posts(data[0])
-        print(posts[0])
-        print(str(posts))
-        date = datetime.strptime(posts[0][4], '%Y-%m-%d %H:%M:%S')
-        keyboardy = kb.post_dates_post
-        keyboardy[1][0] = InlineKeyboardButton(text=f'{date.strftime("%H:%M")}\t{posts[0][2]}', callback_data="post")
-        kbb = InlineKeyboardMarkup(inline_keyboard=keyboardy, resize_keyboard=True)
-        await msg.answer(text.content_plan, reply_markup=kbb, parse_mode=ParseMode.MARKDOWN)
+        today_date = datetime.now().date()
+        end_today_date = datetime.now().date() + timedelta(days=1)
+        print(today_date)
+        posts = await db.get_posts(data[0], today_date, end_today_date)
+        print(posts)
+        kbb = await kb.posts_keyboard(posts, datetime.now())
+        if len(posts) > 0:
+            await msg.answer(text.content_plan_text(data[2], f'https://t.me/{data[3]}',
+                                                    f'{text.weekdays[today_date.isoweekday()-1]}, {today_date.day} {text.months[today_date.month - 1]} {today_date.year} г.',
+                                                    len(posts)), reply_markup=kbb, parse_mode=ParseMode.MARKDOWN)
+        else:
+            await msg.answer(text.content_plan_noposts_text(data[2], f'https://t.me/{data[3]}',
+                                                    f'{text.weekdays[today_date.isoweekday()-1]}, {today_date.day} {text.months[today_date.month - 1]} {today_date.year} г.'),
+                                                    reply_markup=kbb, parse_mode=ParseMode.MARKDOWN)
+
+
+@router.callback_query(F.data[0:5] == "post_")
+async def select_post(clbck: CallbackQuery):
+    data = await db.get_post_content(clbck.data[5:])
+    print(data)
+    if data[3] is None:
+        await clbck.message.answer(data[2], reply_markup=kb.edit_post)
+    else:
+        await clbck.message.answer_photo(photo=data[3], caption=data[2], reply_markup=kb.edit_post)
+
+@router.callback_query(F.data[0:5] == "date_")
+async def select_date(clbck: CallbackQuery):
+    data = await db.user_get_channels(clbck.message.chat.id)
+    data = data[0]
+    date = clbck.data[5:]
+    today_date = datetime.strptime(date, '%Y-%m-%d')
+    end_today_date = today_date + timedelta(days=1)
+    print(today_date)
+    posts = await db.get_posts(data[0], today_date, end_today_date)
+    print(posts)
+    kbb = await kb.posts_keyboard(posts, today_date)
+    if len(posts) > 0:
+        await clbck.message.edit_text(text.content_plan_text(data[2], f'https://t.me/{data[3]}',
+                                                    f'{text.weekdays[today_date.isoweekday()-1]}, {today_date.day} {text.months[today_date.month - 1]} {today_date.year} г.',
+                                                    len(posts)), reply_markup=kbb, parse_mode=ParseMode.MARKDOWN)
+    else:
+        await clbck.message.edit_text(text.content_plan_noposts_text(data[2], f'https://t.me/{data[3]}',
+                                                    f'{text.weekdays[today_date.isoweekday()-1]}, {today_date.day} {text.months[today_date.month - 1]} {today_date.year} г.'),
+                                                    reply_markup=kbb, parse_mode=ParseMode.MARKDOWN)
 
 
 @router.message(Gen.new_post)
@@ -91,21 +132,26 @@ async def new_post(msg: Message, state: FSMContext):
         await state.update_data(text=msg.caption)
         await msg.answer_video(video=video, caption=msg.caption, reply_markup=kb.edit_post)
 
+
 @router.callback_query(F.data == "cancel")
 async def cancel_post(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
     await state.set_state(Gen.new_post)
     await clbck.answer("Создание поста отменено!")
 
+
 @router.callback_query(F.data == "next")
 async def post_settings(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
     await clbck.message.answer(text.post_settings_text, reply_markup=kb.post_setting, parse_mode=ParseMode.MARKDOWN)
+
+
 @router.callback_query(F.data == "schedule_post")
 async def schedule_post(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
     await clbck.message.answer(text.post_schedule_text, reply_markup=kb.post_dates)
     await state.set_state(Gen.set_date)
+
 
 @router.message(Gen.set_date)
 async def set_date(msg: Message, state: FSMContext):
@@ -120,7 +166,14 @@ async def set_date(msg: Message, state: FSMContext):
     date = date_msc + timedelta(hours=2)
     await state.update_data(date=date)
     await msg.answer(f'Пост был запланирован в канал [tester](https://t.me/testestsetse) на {text.weekdays[date_msc.isoweekday()-1]}, {date_msc.day} {text.months[date_msc.month - 1]} {date_msc.year} г. в {date_msc.strftime("%H:%M")}', parse_mode=ParseMode.MARKDOWN)
-    scheduler.add_job(send_scheduled, "date", run_date=date, args=[await state.get_data()])
+    data = await state.get_data()
+    scheduler.add_job(send_scheduled, "date", run_date=date, args=[data])
+    if 'video' in data.keys():
+        await db.add_post(data['channel'], data['text'], data['video'], data['date'])
+    elif 'photo' in data.keys():
+        await db.add_post(data['channel'], data['text'], data['photo'], data['date'])
+    else:
+        await db.add_post(data['channel'], data['text'], None, data['date'])
     await state.set_state(Gen.new_post)
 
 
@@ -128,6 +181,8 @@ async def set_date(msg: Message, state: FSMContext):
 async def post_settings(clbck: CallbackQuery):
     await clbck.message.delete()
     await clbck.message.answer(text.post_confirmation_text, reply_markup=kb.post_confirmation)
+
+
 @router.callback_query(F.data == "send_post")
 async def send_message(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
@@ -140,6 +195,7 @@ async def send_message(clbck: CallbackQuery, state: FSMContext):
     else:
         await send_text(data)
     await state.set_state(Gen.new_post)
+
 
 async def send_scheduled(data):
     if 'photo' in data.keys():
@@ -156,11 +212,14 @@ async def send_scheduled(data):
 async def send_text(data):
     await bot.send_message(data['channel'], data['text'])
 
+
 async def send_photo(data):
     await bot.send_photo(data['channel'], photo=data['photo'], caption=data['text'])
 
+
 async def send_video(data):
     await bot.send_video(data['channel'], video=data['video'], caption=data['text'])
+
 
 @router.message(Gen.add_channel)
 @router.callback_query(F.data == "add_channel")

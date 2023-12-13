@@ -1,4 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from datetime import datetime, timedelta
+import text
 menu = [
     [KeyboardButton(text="Создать пост", callback_data="create_post"), KeyboardButton(text="Изменить пост", callback_data="edit_post")],
     [KeyboardButton(text="Контент-план", callback_data="content_plan"), KeyboardButton(text="Настройки", callback_data="settings")],
@@ -55,3 +57,22 @@ buy_sub = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Ку
 
 exit_kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="◀️ Выйти в меню")]], resize_keyboard=True)
 iexit_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Выйти в меню", callback_data="menu")]])
+
+async def dates_buttons(selected_date):
+    yesterday = selected_date + timedelta(days=-1)
+    tomorrow = selected_date + timedelta(days=1)
+    btns = [InlineKeyboardButton(text=f'<- {text.wkds[yesterday.isoweekday() - 1]}, {yesterday.date().day} {text.months[yesterday.date().month - 1]}', callback_data="date_"+yesterday.strftime("%Y-%m-%d")),
+            InlineKeyboardButton(text=f'{text.wkds[selected_date.isoweekday() - 1]}, {selected_date.date().day} {text.months[selected_date.date().month - 1]}', callback_data="date_"+selected_date.strftime("%Y-%m-%d")),
+            InlineKeyboardButton(text=f'{text.wkds[tomorrow.isoweekday() - 1]}, {tomorrow.date().day} {text.months[tomorrow.date().month - 1]} ->', callback_data="date_"+tomorrow.strftime("%Y-%m-%d")),]
+    return btns
+
+
+async def posts_keyboard(posts, date):
+    kbs = []
+    for post in posts:
+        date = datetime.strptime(post[4], '%Y-%m-%d %H:%M:%S')
+        kbs = kbs + [[InlineKeyboardButton(text=f'{date.strftime("%H:%M")}\t{post[2]}', callback_data="post_"+str(post[0]))]]
+    dates = await dates_buttons(date)
+    kbs = kbs + [dates]
+    kbb = InlineKeyboardMarkup(inline_keyboard=kbs, resize_keyboard=True)
+    return kbb
