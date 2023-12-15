@@ -6,3 +6,4 @@ class Gen(StatesGroup):
     edit_post = State()
     channel_id = State()
     set_date = State()
+    get_buttons = State()

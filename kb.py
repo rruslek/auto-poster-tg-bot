@@ -42,6 +42,12 @@ post_dates_post = [
     [InlineKeyboardButton(text="", callback_data="post")],
 ]
 
+back_button_only = [
+    [InlineKeyboardButton(text="<- Назад", callback_data="cancel")],
+]
+
+back_button = InlineKeyboardMarkup(inline_keyboard=back_button_only, resize_keyboard=True)
+
 menu = ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True)
 edit_post = InlineKeyboardMarkup(inline_keyboard=post_media_text, resize_keyboard=True)
 post_setting = InlineKeyboardMarkup(inline_keyboard=post_setting_ready, resize_keyboard=True)

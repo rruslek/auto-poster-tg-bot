@@ -24,7 +24,6 @@ router = Router()
 scheduler = AsyncIOScheduler()
 bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 
-
 @router.message(Command("start"))
 async def start_handler(msg: Message):
     await db.add_user(msg.from_user.id)
@@ -133,6 +132,21 @@ async def new_post(msg: Message, state: FSMContext):
         await msg.answer_video(video=video, caption=msg.caption, reply_markup=kb.edit_post)
 
 
+@router.callback_query(F.data == "url_buttons")
+async def add_buttons(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.edit_text(text.url_buttons_text, reply_markup=kb.back_button)
+    await state.set_state(Gen.get_buttons)
+
+
+@router.message(Gen.get_buttons)
+async def get_buttons(msg: Message, state: FSMContext):
+    buttons = msg.text.split("\n")
+    for button in buttons:
+        print(button)
+    await state.update_data(buttons=buttons)
+    await msg.answer()
+
+
 @router.callback_query(F.data == "cancel")
 async def cancel_post(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
@@ -183,6 +197,7 @@ async def post_settings(clbck: CallbackQuery):
     await clbck.message.answer(text.post_confirmation_text, reply_markup=kb.post_confirmation)
 
 
+
 @router.callback_query(F.data == "send_post")
 async def send_message(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.delete()
@@ -210,7 +225,17 @@ async def send_scheduled(data):
 
 
 async def send_text(data):
-    await bot.send_message(data['channel'], data['text'])
+    if len(data['buttons']) > 0:
+        kbs = []
+        for button in data['buttons']:
+            text = button.split(' - ')[0]
+            url = button.split(' - ')[1]
+            kbs = kbs + [[InlineKeyboardButton(text=text,
+                                               url=url)]]
+        kbb = InlineKeyboardMarkup(inline_keyboard=kbs, resize_keyboard=True)
+        await bot.send_message(data['channel'], data['text'], reply_markup=kbb)
+    else:
+        await bot.send_message(data['channel'], data['text'])
 
 
 async def send_photo(data):
